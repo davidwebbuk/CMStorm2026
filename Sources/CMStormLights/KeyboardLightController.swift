@@ -49,7 +49,10 @@ final class KeyboardLightController: ObservableObject {
     }
 
     @Published var scrollLockToggles: Bool {
-        didSet { defaults.set(scrollLockToggles, forKey: Keys.scrollLockToggles) }
+        didSet {
+            defaults.set(scrollLockToggles, forKey: Keys.scrollLockToggles)
+            for keyboard in activeKeyboards { updateScrollLockRemap(for: keyboard) }
+        }
     }
 
     @Published var keepAlive: Bool {
@@ -226,6 +229,7 @@ final class KeyboardLightController: ObservableObject {
             keyboard.set(false, target: target)
             excluded.insert(keyboard.settingsKey)
         }
+        updateScrollLockRemap(for: keyboard)
     }
 
     func toggle() {
@@ -240,6 +244,14 @@ final class KeyboardLightController: ObservableObject {
         // macOS sets the LED report itself just after attach; apply after it.
         apply(to: keyboard)
         reapplySoon(after: [0.3, 1.5])
+        // The keyboard's event-system services can appear slightly after the
+        // IOHIDDevice does, so retry the remap a couple of times.
+        for delay in [0.0, 1.0, 3.0] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self, weak keyboard] in
+                guard let self, let keyboard, self.keyboards.contains(where: { $0 === keyboard }) else { return }
+                self.updateScrollLockRemap(for: keyboard)
+            }
+        }
     }
 
     private func deviceRemoved(_ device: IOHIDDevice) {
@@ -259,6 +271,24 @@ final class KeyboardLightController: ObservableObject {
             reapplySoon(after: [0.1, 0.5])
         default:
             break
+        }
+    }
+
+    // MARK: - Scroll Lock remap
+
+    /// While the Scroll Lock key toggles the lights, stop macOS also treating
+    /// it as F14 ("decrease display brightness").
+    private func updateScrollLockRemap(for keyboard: Keyboard) {
+        let suppress = scrollLockToggles && isEnabled(keyboard)
+        if !ScrollLockRemapper.setSuppressed(suppress, vendorID: keyboard.vendorID, productID: keyboard.productID), suppress {
+            lastError = "\(keyboard.name): couldn't stop Scroll Lock dimming the display"
+        }
+    }
+
+    /// Puts every keyboard's Scroll Lock key back to normal (used on quit).
+    func restoreScrollLockKeys() {
+        for keyboard in keyboards {
+            ScrollLockRemapper.setSuppressed(false, vendorID: keyboard.vendorID, productID: keyboard.productID)
         }
     }
 

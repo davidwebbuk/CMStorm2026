@@ -21,6 +21,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         KeyboardLightController.shared.start()
     }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        KeyboardLightController.shared.restoreScrollLockKeys()
+    }
 }
 
 private struct MenuContent: View {

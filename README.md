@@ -17,7 +17,7 @@ CMStorm Lights sets the Scroll Lock LED through IOKit's HID Manager. It then rea
 ## Features
 
 - **Keyboard Lights** on/off (⌘L in the menu). The state is remembered between launches.
-- **Scroll Lock key toggles lights**: press Scroll Lock on the keyboard to toggle the backlight, as on Windows.
+- **Scroll Lock key toggles lights**: press Scroll Lock on the keyboard to toggle the backlight, as on Windows. The app also stops macOS treating that key press as "dim the display" (see Troubleshooting).
 - **Keyboards**: lists every external keyboard that has LEDs, and lets you include or exclude each one. Built-in MacBook keyboards are always left alone.
 - **Backlight LED**: Scroll Lock by default. If your board is a rebadge that uses a different LED, choose Num Lock, Caps Lock, Compose, Kana or All LEDs.
 - **Keep Lights On**: reapplies the state every 3 seconds, for keyboards that still switch off now and then.
@@ -55,7 +55,7 @@ Every push builds the app on GitHub Actions. Pushing a tag such as `v1.0.0` also
 - **Permission granted but nothing happens.** Use **Relaunch CMStorm Lights**. macOS often applies the new permission only after a restart of the app.
 - **Permission stopped working after an update.** Ad-hoc signed builds get a new signature on every build, so macOS treats each one as a new app. Remove *CMStorm Lights* from the Input Monitoring list, add it again, and relaunch.
 - **Lights go off when I press Caps Lock or after sleep.** The app reapplies the state after both events. If your keyboard still drops it, switch on **Keep Lights On**.
-- **Scroll Lock also dims my display.** macOS maps Scroll Lock to F14, which is "decrease brightness" by default on some setups. Change or remove that shortcut in **System Settings → Keyboard → Keyboard Shortcuts → Display**.
+- **Scroll Lock also dims my display.** macOS treats Scroll Lock as F14, which is its "decrease display brightness" key. While **Scroll Lock Key Toggles Lights** is on, the app remaps Scroll Lock to F20 (which does nothing) on the CM Storm keyboard only. Other keyboards keep F14 brightness. The remap is undone when you quit, turn the option off or exclude the keyboard. If it still dims, the menu will show an error; as a fallback, untick "Decrease display brightness" in **System Settings → Keyboard → Keyboard Shortcuts → Display**.
 
 ## Project layout
 
@@ -66,6 +66,7 @@ Sources/CMStormLights/
   KeyboardLightController.swift     HID Manager, permissions, reapply logic, settings
   Keyboard.swift                    Wrapper for one keyboard and its LED elements
   LEDTarget.swift                   Which LED drives the backlight
+  ScrollLockRemapper.swift          Stops Scroll Lock acting as F14 (brightness down)
 Resources/Info.plist                App bundle metadata (LSUIElement menu bar app)
 scripts/build-app.sh                Builds, bundles, signs and zips the .app
 scripts/make-icon.swift             Renders the app icon at build time
