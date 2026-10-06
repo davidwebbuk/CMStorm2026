@@ -60,7 +60,7 @@ enum ScrollLockRemapper {
         var result: [IOHIDServiceClient] = []
         for index in 0..<CFArrayGetCount(array) {
             let service = unsafeBitCast(CFArrayGetValueAtIndex(array, index), to: IOHIDServiceClient.self)
-            guard IOHIDServiceClientConformsTo(service, UInt32(kHIDPage_GenericDesktop), UInt32(kHIDUsage_GD_Keyboard)),
+            guard IOHIDServiceClientConformsTo(service, UInt32(kHIDPage_GenericDesktop), UInt32(kHIDUsage_GD_Keyboard)) != 0,
                   intProperty(service, kIOHIDVendorIDKey) == vendorID,
                   intProperty(service, kIOHIDProductIDKey) == productID else { continue }
             result.append(service)
