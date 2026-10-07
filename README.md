@@ -25,7 +25,7 @@ CMStorm Lights sets the Scroll Lock LED through IOKit's HID Manager. It then rea
 
 ## Install
 
-1. Download `CMStormLights.zip` from the [Releases](../../releases) page, or from the latest successful run on the [Actions](../../actions) tab under *Artifacts*.
+1. Download `CMStormLights.zip` from the [Releases](https://github.com/davidwebbuk/CMStorm2026/releases) page, or from the latest successful run on the [Actions](https://github.com/davidwebbuk/CMStorm2026/actions/workflows/build.yml) tab under *Artifacts*.
 2. Unzip it and move **CMStorm Lights.app** to `/Applications`.
 3. The app is ad-hoc signed, not notarised, so macOS will block it on first launch. Either:
    - open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**, or
