@@ -88,6 +88,8 @@ final class KeyboardLightController: ObservableObject {
     private var keepAliveTimer: Timer?
     private var permissionTimer: Timer?
     private var observers: [NSObjectProtocol] = []
+    private var scrollLockPresses = 0
+    private var remapLog: [String] = []
 
     private init() {
         defaults.register(defaults: [
@@ -265,7 +267,10 @@ final class KeyboardLightController: ObservableObject {
 
         switch IOHIDElementGetUsage(element) {
         case UInt32(kHIDUsage_KeyboardScrollLock):
-            if pressed, scrollLockToggles { toggle() }
+            if pressed {
+                scrollLockPresses += 1
+                if scrollLockToggles { toggle() }
+            }
         case UInt32(kHIDUsage_KeyboardCapsLock):
             // macOS rewrites all LEDs when Caps Lock changes state.
             reapplySoon(after: [0.1, 0.5])
@@ -280,7 +285,10 @@ final class KeyboardLightController: ObservableObject {
     /// it as F14 ("decrease display brightness").
     private func updateScrollLockRemap(for keyboard: Keyboard) {
         let suppress = scrollLockToggles && isEnabled(keyboard)
-        if !ScrollLockRemapper.setSuppressed(suppress, vendorID: keyboard.vendorID, productID: keyboard.productID), suppress {
+        let ok = ScrollLockRemapper.setSuppressed(suppress, vendorID: keyboard.vendorID, productID: keyboard.productID)
+        remapLog.append("\(Date()) \(keyboard.settingsKey) \(suppress ? "apply" : "remove") -> \(ok ? "ok" : "FAILED")")
+        if remapLog.count > 20 { remapLog.removeFirst(remapLog.count - 20) }
+        if !ok, suppress {
             lastError = "\(keyboard.name): couldn't stop Scroll Lock dimming the display"
         }
     }
@@ -290,6 +298,40 @@ final class KeyboardLightController: ObservableObject {
         for keyboard in keyboards {
             ScrollLockRemapper.setSuppressed(false, vendorID: keyboard.vendorID, productID: keyboard.productID)
         }
+    }
+
+    // MARK: - Diagnostics
+
+    /// A plain-text report for bug reports, copied from the menu.
+    func diagnosticsReport() -> String {
+        let info = Bundle.main.infoDictionary
+        var lines = [
+            "CMStorm Lights \(info?["CFBundleShortVersionString"] as? String ?? "?")",
+            "macOS \(ProcessInfo.processInfo.operatingSystemVersionString)",
+            "Input Monitoring: \(permission), HID manager open: \(managerOpen)",
+            "Lights on: \(lightsOn), LED: \(target.rawValue), Scroll Lock toggles: \(scrollLockToggles), keep alive: \(keepAlive)",
+            "Scroll Lock presses seen: \(scrollLockPresses)",
+            "Last error: \(lastError ?? "none")",
+            "",
+            "Keyboards:",
+        ]
+        if keyboards.isEmpty { lines.append("  (none)") }
+        for keyboard in keyboards {
+            let leds = LEDTarget.allCases.filter { $0 != .all && keyboard.supports($0) }.map(\.shortName)
+            lines.append("  \(keyboard.name) [\(keyboard.settingsKey)] enabled=\(isEnabled(keyboard)) LEDs=\(leds.joined(separator: ","))")
+            for line in ScrollLockRemapper.diagnostics(vendorID: keyboard.vendorID, productID: keyboard.productID) {
+                lines.append("    \(line)")
+            }
+        }
+        lines.append("")
+        lines.append("Remap log:")
+        lines.append(contentsOf: remapLog.isEmpty ? ["  (empty)"] : remapLog.map { "  \($0)" })
+        return lines.joined(separator: "\n")
+    }
+
+    func copyDiagnostics() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(diagnosticsReport(), forType: .string)
     }
 
     // MARK: - Applying

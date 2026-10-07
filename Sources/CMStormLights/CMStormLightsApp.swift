@@ -80,6 +80,9 @@ private struct MenuContent: View {
 
         Divider()
 
+        Button("Copy Diagnostics") {
+            controller.copyDiagnostics()
+        }
         Button("About CMStorm Lights") {
             NSApp.activate(ignoringOtherApps: true)
             NSApp.orderFrontStandardAboutPanel(nil)
