@@ -3,6 +3,7 @@
 #
 # Environment:
 #   VERSION            version string to stamp into Info.plist (default 1.0.0)
+#   BUILD              build identifier (default: short git commit hash)
 #   CODESIGN_IDENTITY  signing identity (default "-" = ad-hoc)
 set -euo pipefail
 
@@ -11,6 +12,7 @@ cd "$(dirname "$0")/.."
 APP_NAME="CMStorm Lights"
 EXECUTABLE="CMStormLights"
 VERSION="${VERSION:-1.0.0}"
+BUILD="${BUILD:-$(git rev-parse --short HEAD 2>/dev/null || echo dev)}"
 IDENTITY="${CODESIGN_IDENTITY:--}"
 APP="build/${APP_NAME}.app"
 
@@ -24,7 +26,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN_DIR/$EXECUTABLE" "$APP/Contents/MacOS/$EXECUTABLE"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 plutil -replace CFBundleShortVersionString -string "$VERSION" "$APP/Contents/Info.plist"
-plutil -replace CFBundleVersion -string "$VERSION" "$APP/Contents/Info.plist"
+plutil -replace CFBundleVersion -string "$BUILD" "$APP/Contents/Info.plist"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
 echo "==> Rendering icon"
@@ -41,4 +43,4 @@ echo "==> Zipping"
 rm -f build/CMStormLights.zip
 ditto -c -k --keepParent "$APP" build/CMStormLights.zip
 
-echo "Done: $APP"
+echo "Done: $APP (version $VERSION, build $BUILD)"

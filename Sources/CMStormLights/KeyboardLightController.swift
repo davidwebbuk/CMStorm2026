@@ -306,7 +306,7 @@ final class KeyboardLightController: ObservableObject {
     func diagnosticsReport() -> String {
         let info = Bundle.main.infoDictionary
         var lines = [
-            "CMStorm Lights \(info?["CFBundleShortVersionString"] as? String ?? "?")",
+            "CMStorm Lights \(info?["CFBundleShortVersionString"] as? String ?? "?") (build \(info?["CFBundleVersion"] as? String ?? "?"))",
             "macOS \(ProcessInfo.processInfo.operatingSystemVersionString)",
             "Input Monitoring: \(permission), HID manager open: \(managerOpen)",
             "Lights on: \(lightsOn), LED: \(target.rawValue), Scroll Lock toggles: \(scrollLockToggles), keep alive: \(keepAlive)",

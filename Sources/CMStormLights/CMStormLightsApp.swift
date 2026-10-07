@@ -80,6 +80,7 @@ private struct MenuContent: View {
 
         Divider()
 
+        Text(versionText)
         Button("Copy Diagnostics") {
             controller.copyDiagnostics()
         }
@@ -91,6 +92,13 @@ private struct MenuContent: View {
             NSApp.terminate(nil)
         }
         .keyboardShortcut("q")
+    }
+
+    private var versionText: String {
+        let info = Bundle.main.infoDictionary
+        let version = info?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = info?["CFBundleVersion"] as? String ?? "?"
+        return "Version \(version) (build \(build))"
     }
 
     private func label(for keyboard: Keyboard) -> String {

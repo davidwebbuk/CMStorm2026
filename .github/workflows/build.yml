@@ -27,6 +27,8 @@ jobs:
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             export VERSION="${GITHUB_REF_NAME#v}"
           fi
+          # Build number and commit, e.g. "7 (a1b2c3d)", shown in the app's menu.
+          export BUILD="${GITHUB_RUN_NUMBER}.$(git rev-parse --short HEAD)"
           ./scripts/build-app.sh
 
       - name: Upload app
